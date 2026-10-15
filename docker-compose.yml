@@ -1,0 +1,64 @@
+# DockWash on the Synology (hermes). `./deploy.sh --start` applies this; after that, deploys are just `git push nas`.
+#
+# Layout on the NAS:
+#   /volume1/docker/dockwash-git/dockwash.git   the bare repository you push to
+#   /volume1/docker/dockwash/app                the checked-out code (written by the post-receive hook)
+#   /volume1/docker/dockwash/data               the SQLite database, outside the checkout so a deploy never touches it
+#
+# The code is mounted rather than baked into an image, and node --watch restarts the app when a push
+# changes it, so deploying needs no docker (or sudo) at all. It watches the folder, not single files:
+# git replaces files on checkout, which a watch on a file loses track of.
+services:
+  dockwash:
+    image: node:24-alpine
+    container_name: dockwash
+    user: "1026:100"            # chris:users, so the database stays readable from File Station and backups
+    # The /volume1/docker share's ACL only lets the administrators group (101) write, and a container
+    # gets no supplementary groups, so without this the app can't create its database.
+    group_add:
+      - "101"
+    working_dir: /srv/app
+    volumes:
+      - /volume1/docker/dockwash:/srv
+    command: node --disable-warning=ExperimentalWarning --watch-path=/srv/app/src src/server.js
+    environment:
+      - TZ=America/New_York
+      - PORT=3200
+      - DATA_DIR=/srv/data
+      - TRUST_PROXY=1           # read the visitor's address from the tunnel's CF-Connecting-IP header
+    ports:
+      - "3210:3200"
+    mem_limit: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3200/health"]
+      interval: 60s
+      timeout: 5s
+
+  # A public https://<random>.trycloudflare.com address for DockWash (`./deploy.sh --public` / `--public-stop`).
+  # No account, no DNS, no router ports: it connects out to Cloudflare. The address changes each time it starts.
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: dockwash-tunnel
+    command: ["tunnel", "--no-autoupdate", "--url", "http://dockwash:3200"]
+    profiles: ["public"]
+    depends_on: [dockwash]
+    mem_limit: 128m
+    restart: unless-stopped
+
+  # The permanent address (https://dockwash.cjmtech.net): a named Cloudflare tunnel (`./deploy.sh --domain`).
+  # Its token is in data/cloudflared/token (never in the repo); the hostname -> http://dockwash:3200 route is
+  # set on the tunnel in the Cloudflare dashboard. Runs as chris so it can read the token file, which is chmod 600.
+  domain-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: dockwash-domain-tunnel
+    user: "1026:100"
+    group_add:
+      - "101"
+    volumes:
+      - /volume1/docker/dockwash/data/cloudflared:/etc/cloudflared:ro
+    command: ["tunnel", "--no-autoupdate", "run", "--token-file", "/etc/cloudflared/token"]
+    profiles: ["domain"]
+    depends_on: [dockwash]
+    mem_limit: 128m
+    restart: unless-stopped

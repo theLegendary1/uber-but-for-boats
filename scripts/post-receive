@@ -1,0 +1,16 @@
+#!/bin/sh
+# Git hook for the NAS copy of DockWash: after every push to main, check the code out into the app folder.
+# Installed into /volume1/docker/dockwash-git/dockwash.git/hooks/ by `./deploy.sh --setup`.
+# The container's node --watch notices the new code and restarts the app on its own.
+set -e
+APP=/volume1/docker/dockwash/app
+BRANCH=main
+
+while read -r old new ref; do
+  if [ "$ref" = "refs/heads/$BRANCH" ]; then
+    mkdir -p "$APP"
+    git --work-tree="$APP" --git-dir="$GIT_DIR" checkout -f "$BRANCH"
+    git --work-tree="$APP" --git-dir="$GIT_DIR" clean -fdq -e data    # drop files the push deleted
+    echo "DockWash: deployed $(git --git-dir="$GIT_DIR" rev-parse --short "$new") to $APP"
+  fi
+done
