@@ -1,5 +1,7 @@
 # Testing DockWash
 
+*Robert, test lead:* “A clean dashboard is nice. Show me the whole booking actually works.”
+
 The suite has two layers: fast Node tests for rules and server behavior, and Playwright browser tests for complete user journeys. Browser tests use the actual HTML, JavaScript, forms, sessions, and SQLite database. Each test gets its own temporary database and server on an automatically assigned port. They never use the NAS database or a running local demo. Notification credentials are absent, so no real emails or texts are sent.
 
 ## Run the suite

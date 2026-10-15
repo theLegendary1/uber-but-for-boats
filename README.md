@@ -1,4 +1,6 @@
 # DockWash
+
+*Dale, dockside project guide:* “Bring the crew. We have room for boat-washing activities.”
 ## Boats and Hos Step Brothers the movie attitude Prestige Worldwide vibes and clean boats.
 Boat-washing bookings for marina managers and independent cleaners, adapted from the PallCall IntelliJ project at `/Users/chris/IdeaProjects/untitled2`.
 
@@ -81,3 +83,9 @@ Data and backups are ignored by Git. Run `npm run seed` only for a demo; its pub
 The Invite page offers separate cleaner and marina-manager links, both carrying your personal referral code. Share buttons open the native phone share menu (for apps such as Messages or WhatsApp), or copy the message and link when native sharing is unavailable. Text and explicit Copy buttons also work. DockWash tracks attributed signups and activation after a booking; it does not yet count link clicks. The admin leaderboard is restricted to addresses configured in `ADMIN_EMAILS`.
 
 Use a permanent hostname before a broad launch so links people share keep working. The public NAS database starts empty; create your own account rather than using the local demo credentials. SMS and email remain in test mode.
+
+## The project journey
+
+*Derek, release desk:* “Every commit gets a number. Every change gets a place in the ledger.”
+
+Local commits automatically bump semantic versions, update the changelog, and add a short cast-flavored line. Run `npm ci` to install the hook. See [the crew handbook](CONTRIBUTING.md) for version rules, documentation voices, and the new-feature workflow. Dialogue in project documentation is original character-style copy.

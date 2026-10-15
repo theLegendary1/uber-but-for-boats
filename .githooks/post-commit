@@ -1,0 +1,3 @@
+#!/bin/sh
+# Finalize only the newly created local commit; the amendment disables hooks to avoid recursion.
+exec node scripts/version-commit.js
